@@ -27,29 +27,40 @@ public class Client {
 		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 		boolean flag = false;
-		//Connect to server
+		//Ket noi den Server
 		RequestObject request = new RequestObject(Event.CONNECT_TO_SERVER);
 		out.writeObject(request);
 		
-		if(((ResponseObject) in.readObject()).getStatusCode() == StatusCode.OK) System.out.println("Ket noi thanh cong");
-		
-		//Search user to chat
-		out.writeObject(new RequestObject(Event.SEARCH_USER));
+		//Nhan response tu server
 		if(((ResponseObject) in.readObject()).getStatusCode() == StatusCode.OK) {
+			System.out.println("Ket noi thanh cong");
 			flag = true;
-			System.out.println("Tim thay nguoi la\nID nguoi la: " + in.readUTF() +"\nBat dau chat");
 		}
-		//Start chatting!
-		ResponseProcess responseProcess = new ResponseProcess(in);
-		responseProcess.start();
 		while(flag) {
-			Scanner sc = new Scanner(System.in);
-			String message = sc.nextLine();
-			if(!message.equals("")) {
-				out.writeObject(new MessageRequest(Event.SEND_MESSAGE, message));
-				System.out.println("Ban: " + message);
-			}
+			System.out.println("Dang tim kiem nguoi la");
 			
+			//Gui request co event search_user den server
+			out.writeObject(new RequestObject(Event.SEARCH_USER));
+			
+			//Nhan response tu server
+			if(((ResponseObject) in.readObject()).getStatusCode() == StatusCode.OK) 
+				System.out.println("Tim thay nguoi la\nID nguoi la: " + in.readUTF() +"\nBat dau chat");
+		
+			//Tao 1 luong xu ly response tu server
+			ReceiveMsgProcess responseProcess = new ReceiveMsgProcess(in);
+			responseProcess.start();
+			
+			//Tao 1 luong xu ly gui msg den server
+			ChattingProcess sendMessageRequestProcess = new ChattingProcess(out);
+			sendMessageRequestProcess.start();
+			
+			//Vong lap doi cho den khi nguoi la thoat
+			while(responseProcess.isAlive()) {
+				
+			}
+			//Kill thread
+			sendMessageRequestProcess.stopThread();
 		}
+		
 	}
 }

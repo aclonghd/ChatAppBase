@@ -10,6 +10,8 @@ import enums.Action;
 public class Server {
 	private ServerSocket server;
 	private int portServer;
+	
+	//2 bien global de cac class goi dc den no
 	public static RoomEngine roomEngine;
 	public static Map<String, SocketHandler> mapSocketHandler;
 	
@@ -22,9 +24,10 @@ public class Server {
 		try {
 			server = new ServerSocket(portServer);
 			while(true) {
+				//Tao 1 thread ms xu ly socket ms khi co ket noi
+				//Moi 1 socket se co thread moi xu ly cac su kien
 				SocketHandler socketHandler = new SocketHandler(server.accept());
 				socketHandler.start();
-				roomEngine.putClient(socketHandler.getUUID(), Action.WAITING);
 				mapSocketHandler.put(socketHandler.getUUID(), socketHandler);
 				
 			}
