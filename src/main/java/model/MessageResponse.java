@@ -1,6 +1,5 @@
 package model;
 
-import java.io.Serializable;
 
 import enums.StatusCode;
 

@@ -1,7 +1,5 @@
 package model;
 
-import java.io.Serializable;
-
 import enums.Event;
 
 @SuppressWarnings("serial")

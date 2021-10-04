@@ -4,13 +4,15 @@ import java.io.IOException;
 
 public class ServerMain {
 	public static void main(String[] args) {
+		// Main
 		try {
-			Server server = new Server(8080);
+			ServerSocketHandler server = new ServerSocketHandler(8080);
 			server.start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 	}
+	
 
 }
