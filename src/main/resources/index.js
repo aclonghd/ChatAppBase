@@ -33,14 +33,14 @@ function append() {
     for (let i = 0; i < msgArray.length; i++){
         if (msgArray[i].type == 'myMsg') {
             data +=
-                '<div class="w-100 d-flex justify-content-end my-2">\n'
+                '<div class="test w-100 d-flex justify-content-end my-2">\n'
                 + '<div class="my message">\n'
                 + msgArray[i].msg
                 + '</div>\n'
                 + '</div>\n'
         } else if(msgArray[i].type == 'yourMsg') {
             data +=
-                '<div class="w-100 d-flex my-2">\n'
+                '<div class="test w-100 d-flex my-2">\n'
                 + '<div class="your message">\n'
                 + msgArray[i].msg
                 + '</div>\n'
