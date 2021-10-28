@@ -54,7 +54,10 @@ public class SocketHandler extends Thread {
 							break;
 						}
 						case SEARCH_USER:{
-
+							if(clientIdMatch != null && action == Action.CHATTING) {
+								notifyDisconnect();
+								clientIdMatch = null;
+							}
 							action = Action.SEARCHING;
 							
 							// Gửi response NO_CONTENT về client để thông báo request tìm người đã thành công
@@ -77,13 +80,6 @@ public class SocketHandler extends Thread {
 							
 							break;
 							
-						}
-						case STOP_CHATTING:{
-							if(clientIdMatch != null && action == Action.CHATTING) {
-								notifyDisconnect();
-								clientIdMatch = null;
-							}
-							response(new ResponseObject(StatusCode.NO_CONTENT));
 						}
 						case DISCONNECT:{
 							getMapSocketHandler().remove(getUUID());

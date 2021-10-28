@@ -2,7 +2,6 @@ package enums;
 
 public enum Event {
 	CONNECT_TO_SERVER,
-	STOP_CHATTING,
 	SEARCH_USER,
 	SEND_MESSAGE,
 	DISCONNECT,

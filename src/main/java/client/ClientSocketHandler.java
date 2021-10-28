@@ -11,7 +11,6 @@ import model.MessageRequest;
 import model.MessageResponse;
 import model.RequestObject;
 import model.ResponseObject;
-import netscape.javascript.JSObject;
 import javafx.scene.web.WebEngine;
 
 public class ClientSocketHandler extends Thread {
@@ -62,16 +61,6 @@ public class ClientSocketHandler extends Thread {
 							case REPLY_FIND_SUCCESS:{
 								runLater("alertMsg('Đã tìm thấy người lạ! Bắt đầu nói chuyện.');");
 								isChatting = true;
-								ChattingProcess chat = new ChattingProcess(out);
-								Platform.runLater(new Runnable() {
-									@Override
-									public void run() {
-										JSObject jsobj = (JSObject) webEngine.executeScript("window");
-										
-										jsobj.setMember("chattingProcess", chat);
-										System.out.println("Inject Success");
-									}
-								});
 								break;
 							} 
 							case USER_DISCONNECT:{
@@ -110,6 +99,13 @@ public class ClientSocketHandler extends Thread {
 		}
 		
 	}
+	public void sendMessage(String message) throws IOException {
+		if(!message.equals("")) {
+			System.out.println("message: " + message);
+			out.writeObject(new MessageRequest(Event.SEND_MESSAGE, message));
+			System.out.println("Ban: " + message);
+		}
+	}
 	
 	public void displayMessage(String message) {
 		String script = "displayMsg('"+ message + "');";
@@ -138,21 +134,6 @@ public class ClientSocketHandler extends Thread {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-	}
-	public class ChattingProcess {
-		private ObjectOutputStream out;
-		
-		public ChattingProcess(ObjectOutputStream out) {
-			this.out = out;
-		}
-		
-		public void sendMessage(String message) throws IOException {
-			if(!message.equals("")) {
-				System.out.println("message: " + message);
-				out.writeObject(new MessageRequest(Event.SEND_MESSAGE, message));
-				System.out.println("Ban: " + message);
-			}
 		}
 	}
 }

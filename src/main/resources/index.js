@@ -26,7 +26,7 @@ function sendMsg(event) {
         }
         msgArray.push(msg);
         append();
-        chattingProcess.sendMessage(input.value);
+        clientSocket.sendMessage(input.value);
         input.value = '';
         
         
