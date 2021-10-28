@@ -7,13 +7,6 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>chatapp</name>
 	<description>Chat app realtime</description>
-	<dependencies>
-		<dependency>
-			<groupId>org.openjfx</groupId>
-			<artifactId>javafx-fxml</artifactId>
-			<version>11.0.2</version>
-		</dependency>
-	</dependencies>
 	
 <!-- Thanks for using https://jar-download.com -->
 	

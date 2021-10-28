@@ -50,14 +50,15 @@ public class SocketHandler extends Thread {
 							
 							action = Action.WAITING;
 							// Gửi response thành công về lại cho client
-							response(new ResponseObject(StatusCode.OK));
+							response(new ResponseObject(StatusCode.REPLY_CONNECT_TO_SERVER));
 							break;
 						}
 						case SEARCH_USER:{
+
 							action = Action.SEARCHING;
 							
 							// Gửi response NO_CONTENT về client để thông báo request tìm người đã thành công
-							response(new ResponseObject(StatusCode.NO_CONTENT));
+							response(new ResponseObject(StatusCode.REPLY_SEARCH_USER));
 							
 							// Thêm request tìm kiếm của socket này vào hàng đợi của searchEngine
 							getSearchEngine().addRequest(getUUID());
@@ -76,6 +77,13 @@ public class SocketHandler extends Thread {
 							
 							break;
 							
+						}
+						case STOP_CHATTING:{
+							if(clientIdMatch != null && action == Action.CHATTING) {
+								notifyDisconnect();
+								clientIdMatch = null;
+							}
+							response(new ResponseObject(StatusCode.NO_CONTENT));
 						}
 						case DISCONNECT:{
 							getMapSocketHandler().remove(getUUID());
@@ -169,7 +177,7 @@ public class SocketHandler extends Thread {
 		action = Action.CHATTING;
 		this.clientIdMatch = clientIdMatch;
 		try {
-			response(new ResponseObject(StatusCode.OK));
+			response(new ResponseObject(StatusCode.REPLY_FIND_SUCCESS));
 		} catch (IOException e) {
 			notifyDisconnect();
 		}

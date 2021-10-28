@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
-@SuppressWarnings("restriction")
+
 public class ClientMain extends Application {
 
 	@Override

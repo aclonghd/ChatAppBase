@@ -6,11 +6,14 @@ const input = document.getElementById("input");
 var msgArray = new Array();
 var data = '';
 
-
 function callFunction(){
     homePage.classList.add("d-none");
     loading.classList.remove("d-none");
     myJavaMember.connectToServer();
+}
+
+function callSearch() {
+    clientSocket.search();
 }
 
 function sendMsg(event) {
@@ -25,6 +28,7 @@ function sendMsg(event) {
         append();
         chattingProcess.sendMessage(input.value);
         input.value = '';
+        
         
     }  
 }
@@ -47,18 +51,21 @@ function append() {
                 + '</div>\n'
         } else {
             data +=
-                '<div class="w-100 my-2 border-success border-bottom border-top text-center">\n'
-                + '<div class="text-success text-uppercase fw-bold h4">'
+                '<div class="messageAlert test">\n'
+                + '<div class= "underline"></div>\n'
+                + '<div class="fw-bold fs-6 text-nowrap mx-2 text-capitalize">'
                 + msgArray[i].msg
                 + '</div>\n'
+                + '<div class= "underline"></div>\n'
                 + '</div>\n'
         }
     }
     msgArray.splice(0, msgArray.length);
     chatArea.innerHTML = data;
+    chatArea.scrollTop = chatArea.scrollHeight - chatArea.clientHeight;
 }
 
-function recevieMsg(message) {
+function displayMsg(message) {
     var msg = {
         type: 'yourMsg',
         msg: message,
@@ -67,6 +74,10 @@ function recevieMsg(message) {
     append();
 }
 function alertMsg(message) {
+    if (chatPage.classList.contains("d-none")) {
+        loading.classList.add("d-none");
+        chatPage.classList.remove("d-none");
+    }
     var msg = {
         type: 'alert',
         msg: message,
@@ -94,9 +105,18 @@ function exit() {
     chatPage.classList.add("d-none");
     homePage.classList.remove("d-none");
     clientSocket.closeSocket(); 
+    data = '';
 }
 
 function error() {
     loading.classList.add("d-none");
     homePage.classList.remove("d-none");
 }
+
+function displayLoading(loadingMsg) {
+    document.getElementById("loadingMsg").innerHTML = loadingMsg;
+    loading.classList.remove("d-none");
+    chatPage.classList.add("d-none");
+}
+
+

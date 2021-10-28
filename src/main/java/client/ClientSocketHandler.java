@@ -7,23 +7,22 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import enums.Event;
-import enums.StatusCode;
 import model.MessageRequest;
+import model.MessageResponse;
 import model.RequestObject;
 import model.ResponseObject;
 import netscape.javascript.JSObject;
 import javafx.scene.web.WebEngine;
 
-@SuppressWarnings("restriction")
 public class ClientSocketHandler extends Thread {
 	private Socket socket;
 	private int numberPort;
 	private String hostName;
 	private boolean isConnected;
 	private WebEngine webEngine;
-	private ReceiveMsgProcess responseProcess;
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
+	private boolean isChatting;
 	
 	public ClientSocketHandler(String hostname, int numberPort, WebEngine webEngine) {
 		this.hostName = hostname;
@@ -33,48 +32,62 @@ public class ClientSocketHandler extends Thread {
 	@Override
 	public void run() {
 		System.out.println(hostName + " " + numberPort);
-		isConnected = false;
+		isConnected = true;
+		isChatting = false;
 		try {
 			socket = new Socket(hostName, numberPort);
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in = new ObjectInputStream(socket.getInputStream());
-			
-			//Ket noi den Server
 			RequestObject request = new RequestObject(Event.CONNECT_TO_SERVER);
-			out.writeObject(request);
-			
-			//Nhan response tu server
-			if(((ResponseObject) in.readObject()).getStatusCode() == StatusCode.OK) {
-				isConnected = true;
-				System.out.println("Ket noi thanh cong");
-				runLater("connectSuccess();");
-				
-			}
+			sendRequest(request);
 			while(isConnected) {
-				out.writeObject(new RequestObject(Event.SEARCH_USER));
-				if(((ResponseObject) in.readObject()).getStatusCode() == StatusCode.NO_CONTENT) runLater("alertMsg('Đang tìm kiếm người lạ');");
-				if(((ResponseObject) in.readObject()).getStatusCode() == StatusCode.OK) {
-					runLater("alertMsg('Đã tìm thấy người lạ! Bắt đầu nói chuyện nào.');");
-
-					ChattingProcess chat = new ChattingProcess(out);
-					Platform.runLater(new Runnable() {
-						@Override
-						public void run() {
-							JSObject jsobj = (JSObject) webEngine.executeScript("window");
-							
-							jsobj.setMember("chattingProcess", chat);
-							System.out.println("Inject Success");
+				Object input = in.readObject();
+				if(input != null) {
+					if(input instanceof MessageResponse && isChatting) {
+						MessageResponse msgResponse = (MessageResponse) input;
+						displayMessage(msgResponse.getMessage());
+					} else if(input instanceof ResponseObject) {
+					// Ép kiểu object sang request
+						ResponseObject response = (ResponseObject) input;
+						switch(response.getStatusCode()) {
+							case REPLY_CONNECT_TO_SERVER:{
+								System.out.println("Ket noi thanh cong");
+								runLater("connectSuccess();");
+								break;
+							}
+							case REPLY_SEARCH_USER:{
+								runLater("displayLoading('Đang tìm kiếm người lạ');");
+								break;
+							}
+							case REPLY_FIND_SUCCESS:{
+								runLater("alertMsg('Đã tìm thấy người lạ! Bắt đầu nói chuyện.');");
+								isChatting = true;
+								ChattingProcess chat = new ChattingProcess(out);
+								Platform.runLater(new Runnable() {
+									@Override
+									public void run() {
+										JSObject jsobj = (JSObject) webEngine.executeScript("window");
+										
+										jsobj.setMember("chattingProcess", chat);
+										System.out.println("Inject Success");
+									}
+								});
+								break;
+							} 
+							case USER_DISCONNECT:{
+								isChatting = false;
+								runLater("alertMsg('Người lạ đã thoát!');");
+								break;
+							}
+							case REPLY_DISCONNECT:{
+								isConnected = false;
+								break;
+							}
+							default:
+								break;
 						}
-					});
-					responseProcess = new ReceiveMsgProcess(in, webEngine);
-					responseProcess.startProcess();
-					
-					
-				} else {
-					isConnected = false;
-				}
-			
-				
+					}
+				}	
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -84,6 +97,30 @@ public class ClientSocketHandler extends Thread {
 		}
 		
 	}
+	
+	public void sendRequest(RequestObject request) throws IOException {
+		out.writeObject(request);
+	}
+	
+	public void search() {
+		try {
+			sendRequest(new RequestObject(Event.SEARCH_USER));
+		} catch(Exception ex) {
+			
+		}
+		
+	}
+	
+	public void displayMessage(String message) {
+		String script = "displayMsg('"+ message + "');";
+		runLater(script);
+	}
+	
+	public void connectToServer() throws IOException {
+		RequestObject request = new RequestObject(Event.CONNECT_TO_SERVER);
+		sendRequest(request);
+	}
+	
 	public void runLater(String script) {
 		Platform.runLater(new Runnable() {
 			@Override

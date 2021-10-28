@@ -3,7 +3,6 @@ import javafx.scene.web.WebEngine;
 import netscape.javascript.JSObject;
 
 
-@SuppressWarnings("restriction")
 public class Client {
 	private WebEngine webEngine;
 	
