@@ -18,13 +18,15 @@ public class ClientMain extends Application {
 	public void start(final Stage stage) {
 		
 		WebView browser = new WebView();
+		
 		WebEngine webEngine = browser.getEngine();
+		Scene scene = new Scene(browser);
 		
 		URL url = this.getClass().getResource("../index.html");
 		webEngine.setJavaScriptEnabled(true);
 		
 		webEngine.load(url.toString());
-		Scene scene = new Scene(browser);
+		
 		
 		stage.setTitle("Chat Với Người Lạ");
 		stage.setScene(scene);
@@ -40,6 +42,7 @@ public class ClientMain extends Application {
         		jsobj.setMember("myJavaMember", client);
             }
         });
+		
 	}
 
 	public static void main(String[] args) {

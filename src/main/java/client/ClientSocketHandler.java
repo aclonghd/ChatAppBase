@@ -5,12 +5,18 @@ import java.io.ObjectInputStream;
 import javafx.application.Platform;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 import enums.Event;
+import enums.StatusCode;
+import model.FileRequest;
+import model.FileResponse;
 import model.MessageRequest;
 import model.MessageResponse;
 import model.RequestObject;
 import model.ResponseObject;
+import netscape.javascript.JSObject;
 import javafx.scene.web.WebEngine;
 
 public class ClientSocketHandler extends Thread {
@@ -22,11 +28,13 @@ public class ClientSocketHandler extends Thread {
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private boolean isChatting;
+	private List<FileResponse> attachmentList;
 	
 	public ClientSocketHandler(String hostname, int numberPort, WebEngine webEngine) {
 		this.hostName = hostname;
 		this.numberPort = numberPort;
 		this.webEngine = webEngine;
+		this.attachmentList = new ArrayList<FileResponse>();
 	}
 	@Override
 	public void run() {
@@ -45,6 +53,10 @@ public class ClientSocketHandler extends Thread {
 					if(input instanceof MessageResponse && isChatting) {
 						MessageResponse msgResponse = (MessageResponse) input;
 						displayMessage(msgResponse.getMessage());
+					} else if(input instanceof FileResponse && isChatting) {
+						FileResponse file = (FileResponse) input;
+						attachmentList.add(file);
+						displayAttachment(file.getFilename(), file.getFileSize());
 					} else if(input instanceof ResponseObject) {
 					// Ép kiểu object sang request
 						ResponseObject response = (ResponseObject) input;
@@ -86,6 +98,39 @@ public class ClientSocketHandler extends Thread {
 		}
 		
 	}
+	public void sendFile(Object object) {
+		JSObject file = (JSObject) object;
+		String filename = (String) file.getMember("filename");
+		String fileType = (String) file.getMember("fileType");
+		int fileSize = (int) file.getMember("fileSize");
+		String stringBuffer = (String) file.getMember("dataBytes");
+		String[] arrayStrBuffer = stringBuffer.split(",");
+		byte[] buffer = new byte[fileSize];
+		System.out.println(filename);
+		for(int i = 0; i < fileSize; i++) {
+			buffer[i] = (byte) Integer.parseInt(arrayStrBuffer[i]);	
+		}
+		FileRequest fileRq = new FileRequest(filename, fileSize, buffer, fileType, Event.SEND_FILE);
+		try {
+			sendRequest(fileRq);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		FileResponse fileRp = new FileResponse(filename, fileSize, buffer, fileType, StatusCode.OK);
+		attachmentList.add(fileRp);
+		
+	}
+	public void downloadFile(String filename) {
+		System.out.println("ooke");
+		for(FileResponse file: attachmentList) {
+			if(file.getFilename().equals(filename)) {
+				FileChooserSavingFile fileChooser = new FileChooserSavingFile(file);
+				fileChooser.start(null);
+				return;
+			}
+		}
+	}
 	
 	public void sendRequest(RequestObject request) throws IOException {
 		out.writeObject(request);
@@ -110,6 +155,13 @@ public class ClientSocketHandler extends Thread {
 	public void displayMessage(String message) {
 		String script = "displayMsg('"+ message + "');";
 		runLater(script);
+	}
+	
+	public void displayAttachment(String filename, int fileSize) {
+		
+		String script = "displayAttaMsg('"+ filename + "', '"+ fileSize +"');";
+		runLater(script);
+		System.out.println(filename);
 	}
 	
 	public void connectToServer() throws IOException {

@@ -11,6 +11,8 @@ import enums.Action;
 import enums.StatusCode;
 import model.RequestObject;
 import model.ResponseObject;
+import model.FileRequest;
+import model.FileResponse;
 import model.MessageRequest;
 import model.MessageResponse;
 
@@ -81,6 +83,23 @@ public class SocketHandler extends Thread {
 							break;
 							
 						}
+						case SEND_FILE:{
+							if(clientIdMatch == null) 
+								response(new ResponseObject(StatusCode.BAD_REQUEST));
+							else {
+								FileRequest fileRq = (FileRequest) request;
+								if(!fileRq.getFilename().equals("")) {
+									FileResponse fileRp = new FileResponse(fileRq.getFilename(), fileRq.getFileSize(), fileRq.getDataBytes(),
+											fileRq.getFileType(), StatusCode.OK);
+									System.out.println(fileRq.getFilename());
+									sendFile(fileRp);
+								}
+									// Hàm gửi msg đến socket đang chat vs socket này
+									
+							}
+							
+							break;
+						}
 						case DISCONNECT:{
 							getMapSocketHandler().remove(getUUID());
 							// Nếu socket này đang tìm kiếm thì xóa request tìm kiếm trong searchEngine
@@ -147,6 +166,10 @@ public class SocketHandler extends Thread {
 	public void sendMessage(String msg) throws IOException {
 		//Goi mapSocketHandler de lay socket cua nguoi dang chat roi gui tra MessageResponse
 		getMapSocketHandler().get(clientIdMatch).response(new MessageResponse(StatusCode.OK, msg));
+	}
+	
+	public void sendFile(FileResponse fileRp) throws IOException {
+		getMapSocketHandler().get(clientIdMatch).response(fileRp);
 	}
 	
 	public void notifyDisconnect() {
