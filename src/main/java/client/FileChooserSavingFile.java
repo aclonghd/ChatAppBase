@@ -25,6 +25,7 @@ public class FileChooserSavingFile extends Application {
 		if (selectedFile != null) {
 			try {
 				// dialog closed by selecting a file to save the data to
+				
 				FileOutputStream br = new FileOutputStream(selectedFile.toPath().toString());
 				byte[] buffer = file.getDataBytes();
 				System.out.println(selectedFile.toPath());

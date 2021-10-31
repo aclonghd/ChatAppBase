@@ -12,15 +12,13 @@
 <body>
     <div class="container vh-100 d-flex flex-column py-4 justify-content-center" id="homePage">
         <div class="row align-items-center">
-            <section class="col-md-4 col-lg-4 col-sm-12 d-flex text-center justify-content-around align-items-center">
-                Chào mừng đến với ứng dụng chat với người lạ 
+            <section class="col-md-4 col-lg-4 col-sm-12 d-flex text-center justify-content-around align-items-center flex-column">
+                <p>Chào mừng đến với ứng dụng chat với người lạ</p>
                 <button type="button" class="btn btn-outline-primary" id="connectButton" onclick="callFunction();">Bắt đầu
                     chat!</button>
-                <div id="test"></div>
-
             </section>
-            <section class="col-md-8 col-lg-8 col-sm-12">
-                
+            <section class="col-md-8 col-lg-8 col-sm-12 d-flex text-center justify-content-around align-items-center">
+                <p>Phần này cho cái hình nền đằng sau là đẹp</p>
             </section>
         </div>
     </div>
@@ -51,6 +49,33 @@
             
         </div>
         <div class="input border-top pt-2">
+            <div class="audio" id="audio">
+                <div class="playButton" id="ctrMediaBtn">
+                    <svg id="stopIcon"  xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-stop-fill"
+                        viewBox="0 0 16 16">
+                        <path d="M5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5z" />
+                    </svg>
+                    <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-play-fill d-none"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
+                    </svg>
+                    <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-pause-fill d-none"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z" />
+                    </svg>
+                </div>
+                <div class="ghost"></div>
+                <div class="timeline d-none" id="timeline"></div>
+                <div class="timeCoundown" id="timer">0:00</div>
+                <div class="d-flex align-items-center" id="closeAudioBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                        <path
+                            d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                    </svg>
+                </div>
+            </div>
             <div class="d-flex align-items-center justify-content-end" id="addon">
                 <div class="d-flex align-items-center icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-image"
@@ -60,7 +85,7 @@
                             d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
                     </svg>
                 </div>
-                <div class="d-flex align-items-center icon">
+                <div class="d-flex align-items-center icon" id="recordBtn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-mic-fill"
                         viewBox="0 0 16 16">
                         <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z" />
@@ -81,7 +106,7 @@
             <form class="w-100 d-flex" onsubmit="sendMsg(event)">
                 <div class="w-100 mx-2 inputMsg" id="inputBar">
                     <input type="text" placeholder="Aa" class="w-100 h-75" id="input">
-                    <div tabindex="0" class="addon-button" id="addonBtn" onclick="addonToggle()">
+                    <div class="addon-button" id="addonBtn" onclick="addonToggle()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill text-primary bg-transparent"
                             viewBox="0 0 16 16">
                             <path
@@ -100,6 +125,9 @@
             </form>
         </div>
     </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recorderjs/0.1.0/recorder.min.js"
+        integrity="sha512-Dc8aBUPSsnAiEtyqTYZrldxDfs2FnS8cU7BVHIJ1m5atjKrtQCoPRIn3gsVbKm2qY8NwjpTVTnawoC4XBvEZiQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src='index.js'></script>
 
 </body>

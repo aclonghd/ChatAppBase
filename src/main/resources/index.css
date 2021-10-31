@@ -191,3 +191,83 @@ form {
   justify-content: center;
   margin: 0 5px;
 }
+.audio {
+  height: 40px;
+  width: 250px;
+  background-color: white;
+  border-radius: 20px;
+  border: 1px solid #0d6efd;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: ease-in-out 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  overflow: hidden;
+}
+.playButton {
+  height: fit-content;
+  width: fit-content;
+  background-color: #e4e6eb;
+  border-radius: 50%;
+  padding: 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.playButton:hover {
+  cursor: pointer;
+}
+.timeCoundown {
+  background-color: #e4e6eb;
+  padding: 0 7px;
+  font-size: medium;
+  font-weight: 500;
+  border-radius: 16px;
+  z-index: 2;
+}
+.ghost {
+  width: 100px;
+}
+.timeline {
+  width: 250px;
+  height: 50px;
+  position: absolute;
+  background-color: #0d6efd;
+  left: 0px;
+  transform: translateX(-100%);
+  transition: all 0.25s;
+  z-index: 0;
+}
+.audio.active {
+  transform: translate(-50%, -105%);
+}
+#closeAudioBtn {
+  border-radius: 50%;
+  transition-property: transform;
+  transition-duration: 0.25s;
+  --webkit-transition-property: transform;
+  --webkit-transition-duration: 0.25s;
+  z-index: 2;
+  padding: 4px 4px;
+  background-color: #e4e6eb;
+}
+#closeAudioBtn:hover {
+  cursor: pointer;
+}
+.audioMsg {
+  height: 40px;
+  width: 250px;
+  background-color: white;
+  border-radius: 20px;
+  border: 1px solid #0d6efd;
+  transition: ease-in-out 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  overflow: hidden;
+  color: black !important;
+  position: relative;
+}

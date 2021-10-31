@@ -6,10 +6,11 @@ import javafx.application.Platform;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import enums.Event;
-import enums.StatusCode;
 import model.FileRequest;
 import model.FileResponse;
 import model.MessageRequest;
@@ -29,12 +30,13 @@ public class ClientSocketHandler extends Thread {
 	private ObjectInputStream in;
 	private boolean isChatting;
 	private List<FileResponse> attachmentList;
-	
+	private Map<String, ClientSpeaker> mapSpeaker;
 	public ClientSocketHandler(String hostname, int numberPort, WebEngine webEngine) {
 		this.hostName = hostname;
 		this.numberPort = numberPort;
 		this.webEngine = webEngine;
 		this.attachmentList = new ArrayList<FileResponse>();
+		this.mapSpeaker = new HashMap<>();
 	}
 	@Override
 	public void run() {
@@ -55,8 +57,17 @@ public class ClientSocketHandler extends Thread {
 						displayMessage(msgResponse.getMessage());
 					} else if(input instanceof FileResponse && isChatting) {
 						FileResponse file = (FileResponse) input;
-						attachmentList.add(file);
-						displayAttachment(file.getFilename(), file.getFileSize());
+						
+						if(file.getFileType().equals("audio")) {
+							
+							ClientSpeaker newSpeaker = new ClientSpeaker(file.getDataBytes());
+							mapSpeaker.put(file.getFilename(), newSpeaker);
+							displayAudioMsg(file.getFilename(), (int) mapSpeaker.get(file.getFilename()).getAudioDuration());
+						}
+						else {
+							attachmentList.add(file);
+							displayAttachment(file.getFilename(), file.getFileSize());
+						}
 					} else if(input instanceof ResponseObject) {
 					// Ép kiểu object sang request
 						ResponseObject response = (ResponseObject) input;
@@ -117,7 +128,7 @@ public class ClientSocketHandler extends Thread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		FileResponse fileRp = new FileResponse(filename, fileSize, buffer, fileType, StatusCode.OK);
+		FileResponse fileRp = new FileResponse(filename, fileSize, buffer, fileType, null);
 		attachmentList.add(fileRp);
 		
 	}
@@ -152,6 +163,18 @@ public class ClientSocketHandler extends Thread {
 		}
 	}
 	
+	public void sendAudio(String filename, byte[] buff) {
+		FileRequest fileRq = new FileRequest(filename, buff.length, buff, "audio", Event.SEND_FILE);
+		try {
+			sendRequest(fileRq);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ClientSpeaker newSpeaker = new ClientSpeaker(buff);
+		mapSpeaker.put(filename, newSpeaker);
+	}
+	
 	public void displayMessage(String message) {
 		String script = "displayMsg('"+ message + "');";
 		runLater(script);
@@ -162,6 +185,41 @@ public class ClientSocketHandler extends Thread {
 		String script = "displayAttaMsg('"+ filename + "', '"+ fileSize +"');";
 		runLater(script);
 		System.out.println(filename);
+	}
+	public void displayAudioMsg(String filename, int fileSize) {
+		String script = "displayAudioMsg('"+ filename + "', '"+ fileSize +"');";
+		runLater(script);
+	}
+	
+	public void playAudioWithUUID(String uuid) {
+		if(mapSpeaker.containsKey(uuid)) {
+			mapSpeaker.get(uuid).play();
+		}
+	}
+	
+	public void pauseAudioWithUUID(String uuid) {
+		if(mapSpeaker.containsKey(uuid)) {
+			mapSpeaker.get(uuid).pause();
+		}
+	}
+	
+	public void resumeAudioWithUUID(String uuid) {
+		if(mapSpeaker.containsKey(uuid)) {
+			mapSpeaker.get(uuid).resume();
+		}
+	}
+	
+	public void stopAudioWithUUID(String uuid) {
+		if(mapSpeaker.containsKey(uuid)) {
+			mapSpeaker.get(uuid).stop();
+		}
+	}
+	
+	public int getAudioDurationWithUUID(String uuid) {
+		if(mapSpeaker.containsKey(uuid)) {
+			return (int) mapSpeaker.get(uuid).getAudioDuration();
+		}
+		return 0;
 	}
 	
 	public void connectToServer() throws IOException {
@@ -180,6 +238,7 @@ public class ClientSocketHandler extends Thread {
 	
 	public void closeSocket() {
 		System.out.println("DA Dong Cong");
+		attachmentList.clear();
 		isConnected = false;
 		try {
 			out.writeObject(new RequestObject(Event.DISCONNECT));
