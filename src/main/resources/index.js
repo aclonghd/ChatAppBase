@@ -11,20 +11,38 @@ var data = '';
 var attachmentArray = new Array();
 var hasARecord = false;
 
+// Cac bien o trong Java gom co myJavaMember, clientSocket. Trong do myJavaMember la class Client, clientSocket la class ClientSocketHandler.
+
 function callFunction(){
     homePage.classList.add("d-none");
     loading.classList.remove("d-none");
     myJavaMember.connectToServer();
-    cacheAr.push(-100);
 }
 
 function callSearch() {
     clientSocket.search();
 }
 
+/*  
+Cach de hien thi tin nhan hay giu lieu gui di/nhan:
+    Dai khai de hien thi doan tin nhan gui di hoac nhan duoc thi tao xe cho mot tag div co id="chatArea" 
+    hien thi thong qua thuoc tinh innerHTML. Cach thuc hien thi:
+        + Nhung tat ca du lieu vao cac the div da css san roi chuyen sang chuoi va duoc luu vao bien data
+        (bien data da khoi tao tu dau, data la mot chuoi)
+        + div co id="chatArea" se in ra chuoi do thong qua thuoc tinh innerHTML = data.
+    Tom lai de hien thi du lieu thi ta cho vao cac the div da css san, roi chuyen no thanh cac the div thanh chuoi
+    roi noi chuoi vao bien data bang toan tu +=. Cuoi cung thi dung thuoc tinh innerHTML de hien thi data.
+*/
+
+/* 
+    Ham ben duoi thuc thi gui doan tin nhan di
+    + Tao mot bien co thuoc tinh la type, msg, .... Them thuoc tinh gi vao thi tuy nhung phai co thuoc tinh type de ham append() xu ly.
+    + Bien day duoc dung o duoi la msg. sau khi tao bien xong thi cho no vao mang msgArray roi goi ham append() de xu ly hien thi doan tin nhan vua gui.
+    + Tat nhien la sau khi gui di thi ta se clear cac gia tri co trong input hay trong uploadInput.
+*/
 function sendMsg(event) {
     event.preventDefault();
-    if (hasARecord == true) {
+    if (hasARecord == true) { // Truong hop co doan ghi am
         if (flag == 1) {
             myJavaMember.stopPlayRecord();
             document.getElementById("audio").classList.remove("active");
@@ -37,6 +55,7 @@ function sendMsg(event) {
             time: time,
         }
         msgArray.push(msg);
+        // cac dong ben duoi giong voi ham thuc thi tat ghi am va an di thanh ghi am
         hasARecord = false;
         document.getElementById("audio").classList.remove("active");
         clearInterval(intervalTimeline);
@@ -48,15 +67,17 @@ function sendMsg(event) {
         if(!pauseIcon.classList.contains("d-none")) pauseIcon.classList.add("d-none");
         if (stopIcon.classList.contains("d-none")) stopIcon.classList.remove("d-none");
         timer.innerHTML = "0:00";
+        // gui du lieu den cho server
         clientSocket.sendAudio(name, myJavaMember.getBufferRecord());
         append();
+
         processMap[name] = -100;
         durationMap[name] = time;
         arrIntervalTmeline[name] = 0;
         arrIntervals[name] = 0;
 
     }
-    if (input.value != '') {
+    if (input.value != '') { // Truong hop co doan tin nhan
         
         let msg = {
             type: 'myMsg',
@@ -69,9 +90,10 @@ function sendMsg(event) {
         document.getElementById("uploadInput").value = "";
         append();
         clientSocket.sendMessage(input.value);
+        // clear tin nhan trong phan input
         input.value = '';
     }  
-    if (uploadInput.files.length > 0) {
+    if (uploadInput.files.length > 0) { // Truong hop co file upload
         for (let i = 0; i < uploadInput.files.length; i++){
             let msg = {
                 type: 'myMsg attachment',
@@ -81,29 +103,36 @@ function sendMsg(event) {
             msgArray.push(msg);
             sendDataFile(uploadInput.files[i]);
         }
+        // clear du lieu hien thi file dinh kem trong inputBar
         removeAttchement();
+        // clear du lieu trong uploadInput
         document.getElementById("uploadInput").value = "";
         append();
     }
 }
-
+/*
+    Ham ben duoi co tac dung de phan loai cac dang tin nhan gui di: tin nhan thuong (mot chuoi String), 
+    file dinh kem, doan ghi am, va anh. Ham chi lay cac du lieu trong mang msgArray hien thi duoc duoi dang String nhu la:
+    tin nhan, ten file, dung luong file,... , roi cong chuoi vao chuoi data. Sau khi cong xong thi se xoa mang msgArray
+    de tranh tinh trang lap lai doan du lieu. Cuoi cung thi innerHTML = data thoi
+*/
 function append() {
     for (let i = 0; i < msgArray.length; i++){
-        if (msgArray[i].type == 'myMsg') {
+        if (msgArray[i].type == 'myMsg') { /*TH1: Doan tin nhan thuong do ben client gui di*/
             data +=
                 '<div class="test w-100 d-flex justify-content-end my-2">\n'
                 + '<div class="my message">\n'
                 + msgArray[i].msg
                 + '</div>\n'
                 + '</div>\n'
-        } else if(msgArray[i].type == 'yourMsg') {
+        } else if(msgArray[i].type == 'yourMsg') { /*TH2: Doan tin nhan thuong do ben client nhan duoc*/ 
             data +=
                 '<div class="test w-100 d-flex my-2">\n'
                 + '<div class="your message">\n'
                 + msgArray[i].msg
                 + '</div>\n'
                 + '</div>\n'
-        } else if(msgArray[i].type == 'myMsg attachment') {
+        } else if(msgArray[i].type == 'myMsg attachment') {  /*TH3: Doan tin nhan la file dinh kem do client gui di*/
             data += `<div class="test w-100 d-flex justify-content-end my-2">
                         <div class="attachmentMsg my message" id="${msgArray[i].msg}" onclick="downloadFiles(this)">
                             <div class="d-flex flex-column justify-content-center align-items-center">
@@ -121,7 +150,7 @@ function append() {
                             </div>
                         </div>
                     </div>`
-        } else if(msgArray[i].type == 'yourMsg attachment') {
+        } else if(msgArray[i].type == 'yourMsg attachment') { /*TH4: Doan tin nhan la file dinh kem do client nhan dc*/
             data += `<div class="test w-100 d-flex my-2">
                         <div class="attachmentMsg your message" id="${msgArray[i].msg}" onclick="downloadFiles(this)">
                             <div class="d-flex flex-column justify-content-center align-items-center">
@@ -139,10 +168,10 @@ function append() {
                             </div>
                         </div>
                     </div>`
-        } else if (msgArray[i].type =='myMsg audio') {
+        } else if (msgArray[i].type =='myMsg audio') { /*TH5: Doan tin nhan la audio ghi am do client gui di*/ 
             data += `<div class="test w-100 d-flex justify-content-end my-2">
                 <div class="my message audioMsg" id="${msgArray[i].msg}">
-                    <div class="playButton" onclick="clickA(this)">
+                    <div class="playButton" onclick="audioFunction(this)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                             class="bi bi-play-fill" viewBox="0 0 16 16">
                             <path
@@ -159,10 +188,10 @@ function append() {
                     <div class="timeCoundown">${msgArray[i].time.toString().toHHMMSS()}</div>
                 </div>
             </div>`
-        } else if (msgArray[i].type =='yourMsg audio') {
+        } else if (msgArray[i].type =='yourMsg audio') { /*TH6: Doan tin nhan la audio ghi am do client nhan dc*/
             data += `<div class="test w-100 d-flex my-2">
                 <div class="your message audioMsg" id="${msgArray[i].msg}">
-                    <div class="playButton" onclick="clickA(this)">
+                    <div class="playButton" onclick="audioFunction(this)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                             class="bi bi-play-fill" viewBox="0 0 16 16">
                             <path
@@ -179,7 +208,7 @@ function append() {
                     <div class="timeCoundown">${msgArray[i].time.toString().toHHMMSS()}</div>
                 </div>
             </div>`
-        } else {
+        } else { /*TH con lai: Thong bao do server gui den*/ 
             data +=
                 '<div class="messageAlert test">\n'
                 + '<div class= "underline"></div>\n'
@@ -189,6 +218,7 @@ function append() {
                 + '<div class= "underline"></div>\n'
                 + '</div>\n'
         }
+        /* Con nhieu truong hop nua nhu la hinh anh, emoji. */
     }
     msgArray.splice(0, msgArray.length);
     chatArea.innerHTML = data;
@@ -350,8 +380,6 @@ uploadInput.onchange = () => {
                     '</svg>' +
                 '</div>'
     }
-    
-    
     inputBar.insertAdjacentHTML("afterbegin", html)
 }
 
@@ -368,7 +396,7 @@ function removeAttchement() {
     }
     
 }
-// Code ben duoi la phan ghi am
+// Code ben duoi la phan ghi am va code script cho cac chuc nang cua audio nhu la phat/tam ngung
 var audio = document.querySelector('audio'),
     startBtnRecord = document.getElementById("recordBtn"),
     ctrMediaBtn = document.getElementById("ctrMediaBtn"),
@@ -378,21 +406,24 @@ var audio = document.querySelector('audio'),
     closeAudioBtn = document.getElementById("closeAudioBtn"),
     timeline = document.getElementById("timeline"),
     timer = document.getElementById("timer");
-var flag, interval, time, intervalTimeline,timeOut,  loadPercent = -100;
+var flag, interval, time, intervalTimeline, timeOut, loadPercent = -100;
+
+// Ham thuc thi ghi am va hien thi thanh audio ghi am
 startBtnRecord.addEventListener('click', () => {
     document.getElementById("audio").classList.add("active");
     addonToggle();
     myJavaMember.startRecording();
     hasARecord = true;
     flag = 1;
-    
-    
     time = 0;
     interval = setInterval(() => {
         timer.innerHTML = (time + 1).toString().toHHMMSS();
         time++;
     }, 1000)
 });
+
+// Ham thuc hien chuc nang cua thanh audio ghi am
+// Dung ghi am va phat lai doan vua ghi am
 ctrMediaBtn.addEventListener('click', () => {
     switch (flag) {
         case 1: {
@@ -468,6 +499,8 @@ ctrMediaBtn.addEventListener('click', () => {
         }
     }
 })
+
+// Ham thuc thi tat ghi am khi bam vao dau (X) va an di thanh ghi am
 closeAudioBtn.addEventListener('click', () => {
     myJavaMember.stopPlayRecord();
     hasARecord = false;
@@ -483,6 +516,9 @@ closeAudioBtn.addEventListener('click', () => {
     if (stopIcon.classList.contains("d-none")) stopIcon.classList.remove("d-none");
     timer.innerHTML = "0:00";
 });
+
+// Them prototype cho lop String
+// De hien thi phut, giay cua audio
 String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10);
     var hours   = Math.floor(sec_num / 3600);
@@ -505,7 +541,9 @@ var durationMap = {};
 var arrIntervalTmeline = {};
 var arrIntervals = {};
 
-function clickA(element) {
+// Ham thuc hien chuc nang cua Audio 
+// Phat/tam ngung (play/pause) am thanh cua audio nhan duoc/gui di
+function audioFunction(element) {
     let playIc = element.childNodes[1];
     let pauseIc = element.childNodes[3];
     let timeL = element.parentNode.childNodes[5];
@@ -513,7 +551,6 @@ function clickA(element) {
     let uuid = element.parentNode.getAttribute("id");
     let tme = clientSocket.getAudioDurationWithUUID(uuid);
     let intervalTmeline = arrIntervalTmeline[uuid], intervals = arrIntervals[uuid], lodPercent = processMap[uuid];
-    // let timeL = element
     toggleDisplayNone(playIc);
     toggleDisplayNone(pauseIc);
     if (lodPercent != -100 && playIc.classList.contains("d-none")) {
@@ -588,7 +625,7 @@ function clickA(element) {
     }
     
 }
-
+// Ham sinh ngau nhien ma UUID
 function uuidv4() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)

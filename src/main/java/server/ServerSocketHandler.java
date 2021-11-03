@@ -27,6 +27,7 @@ public class ServerSocketHandler {
 		try {
 			server = new ServerSocket(portServer);
 			searchEngine.start();
+			System.out.println("Server is running...");
 			while(true) {
 				// SocketHandler kế thừa thread, để xử lý các sự kiện của socket khi server.accept
 				SocketHandler socketHandler = new SocketHandler(server.accept());
