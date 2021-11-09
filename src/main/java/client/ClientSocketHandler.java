@@ -31,6 +31,7 @@ public class ClientSocketHandler extends Thread {
 	private boolean isChatting;
 	private List<FileResponse> attachmentList;
 	private Map<String, ClientSpeaker> mapSpeaker;
+	private byte[] cacheDataBytesImg;
 	public ClientSocketHandler(String hostname, int numberPort, WebEngine webEngine) {
 		this.hostName = hostname;
 		this.numberPort = numberPort;
@@ -59,10 +60,13 @@ public class ClientSocketHandler extends Thread {
 						FileResponse file = (FileResponse) input;
 						
 						if(file.getFileType().equals("audio")) {
-							
 							ClientSpeaker newSpeaker = new ClientSpeaker(file.getDataBytes());
 							mapSpeaker.put(file.getFilename(), newSpeaker);
 							displayAudioMsg(file.getFilename(), (int) mapSpeaker.get(file.getFilename()).getAudioDuration());
+						} else if(file.getFileType().split("/")[0].equals("image")){
+							System.out.println(file.getFilename());
+							cacheDataBytesImg = file.getDataBytes();
+							displayImageMsg(file.getFilename());
 						}
 						else {
 							attachmentList.add(file);
@@ -119,7 +123,7 @@ public class ClientSocketHandler extends Thread {
 		byte[] buffer = new byte[fileSize];
 		System.out.println(filename);
 		for(int i = 0; i < fileSize; i++) {
-			buffer[i] = (byte) Integer.parseInt(arrayStrBuffer[i]);	
+			buffer[i] = (byte) Integer.parseInt(arrayStrBuffer[i]);
 		}
 		FileRequest fileRq = new FileRequest(filename, fileSize, buffer, fileType, Event.SEND_FILE);
 		try {
@@ -176,19 +180,25 @@ public class ClientSocketHandler extends Thread {
 	}
 	
 	public void displayMessage(String message) {
-		String script = "displayMsg('"+ message + "');";
+		String script = String.format("displayMsg(`%s`);", message);
 		runLater(script);
 	}
 	
 	public void displayAttachment(String filename, int fileSize) {
 		
-		String script = "displayAttaMsg('"+ filename + "', '"+ fileSize +"');";
+		String script = String.format("displayAttaMsg(`%s`, `%s`);", filename, fileSize);
 		runLater(script);
 		System.out.println(filename);
 	}
 	public void displayAudioMsg(String filename, int fileSize) {
-		String script = "displayAudioMsg('"+ filename + "', '"+ fileSize +"');";
+		String script = String.format("displayAudioMsg(`%s`, `%d`);", filename, fileSize);
 		runLater(script);
+	}
+	
+	public void displayImageMsg(String filename) {
+		String script = String.format("displayImageMsg(`%s`);", filename);
+		runLater(script);
+		
 	}
 	
 	public void playAudioWithUUID(String uuid) {
@@ -220,6 +230,11 @@ public class ClientSocketHandler extends Thread {
 			return (int) mapSpeaker.get(uuid).getAudioDuration();
 		}
 		return 0;
+	}
+	public byte[] getCacheDataImg() {
+		byte[] res = cacheDataBytesImg;
+		cacheDataBytesImg = null;
+		return res;
 	}
 	
 	public void connectToServer() throws IOException {

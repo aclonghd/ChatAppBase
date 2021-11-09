@@ -20,7 +20,7 @@ public class FileChooserSavingFile extends Application {
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("Save");
 		fileChooser.setInitialFileName(file.getFilename());
-		fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Files", "*.*"), new ExtensionFilter(file.getFileType(), "*.txt"));
+		fileChooser.getExtensionFilters().addAll(new ExtensionFilter(file.getFileType(), getFileType(file.getFileType())), new ExtensionFilter("All Files", "*.*"));
 		File selectedFile = fileChooser.showSaveDialog(stage);
 		if (selectedFile != null) {
 			try {
@@ -45,6 +45,10 @@ public class FileChooserSavingFile extends Application {
 	}
 	public void setFile(FileResponse file) {
 		this.file = file;
+	}
+	public String getFileType(String fileType) {
+		String[] res = fileType.split("/");
+		return "*." + res[1];
 	}
 	
 	

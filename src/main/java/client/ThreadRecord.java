@@ -46,11 +46,9 @@ public class ThreadRecord extends Thread {
 	}
 	
 	public void stopRecord() {
-		
 		flag = false;
 		dataLine.stop();
 		dataLine.close();
-		stop();
 	}
 	public byte[] getbyte() {
 		

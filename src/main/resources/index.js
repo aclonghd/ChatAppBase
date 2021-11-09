@@ -10,6 +10,7 @@ var msgArray = new Array();
 var data = '';
 var attachmentArray = new Array();
 var hasARecord = false;
+var fileList = new Array();
 
 // Cac bien o trong Java gom co myJavaMember, clientSocket. Trong do myJavaMember la class Client, clientSocket la class ClientSocketHandler.
 
@@ -85,28 +86,40 @@ function sendMsg(event) {
         }
         
         msgArray.push(msg);
-        
-        removeAttchement();
-        document.getElementById("uploadInput").value = "";
         append();
         clientSocket.sendMessage(input.value);
         // clear tin nhan trong phan input
         input.value = '';
     }  
-    if (uploadInput.files.length > 0) { // Truong hop co file upload
-        for (let i = 0; i < uploadInput.files.length; i++){
+    if (fileList.length > 0) { // Truong hop co file upload
+        for (let i = 0; i < fileList.length; i++){
+            let fileType = getFileType(fileList[i].name);
             let msg = {
-                type: 'myMsg attachment',
-                msg: uploadInput.files[i].name,
-                size: updateSizeFile(uploadInput.files[i].size),
+                type: null,
+                msg: null,
+                size: null,
+            };
+            if (fileType == (".jpg" || ".png" || ".jpeg" || ".bmp")) {
+                msg = {
+                    type: 'myMsg image',
+                    msg: fileList[i].name,
+                    src: URL.createObjectURL(fileList[i]),
+                }
+            }
+            else {
+                msg = {
+                    type: 'myMsg attachment',
+                    msg: fileList[i].name,
+                    size: getSizeFile(fileList[i].size),
+                }
             }
             msgArray.push(msg);
-            sendDataFile(uploadInput.files[i]);
+            sendDataFile(fileList[i]);
         }
         // clear du lieu hien thi file dinh kem trong inputBar
+        fileList.splice(0, fileList.length);
         removeAttchement();
-        // clear du lieu trong uploadInput
-        document.getElementById("uploadInput").value = "";
+        
         append();
     }
 }
@@ -145,8 +158,8 @@ function append() {
                                 </div>
                                 <label for="" class="fileSize">${msgArray[i].size}</label>
                             </div>
-                            <div class="d-flex align-content-end w-100 ms-2">
-                                <a>${msgArray[i].msg}</a>
+                            <div class="d-flex align-content-end w-100 ms-2" style="word-wrap: break-word; word-break: break-all;">
+                                <span>${msgArray[i].msg}</span>
                             </div>
                         </div>
                     </div>`
@@ -163,8 +176,8 @@ function append() {
                                 </div>
                                 <label for="" class="fileSize">${msgArray[i].size}</label>
                             </div>
-                            <div class="d-flex align-content-end w-100 ms-2">
-                                <a>${msgArray[i].msg}</a>
+                            <div class="d-flex align-content-end w-100 ms-2" style="word-wrap: break-word; word-break: break-all;">
+                                <span>${msgArray[i].msg}</span>
                             </div>
                         </div>
                     </div>`
@@ -208,6 +221,22 @@ function append() {
                     <div class="timeCoundown">${msgArray[i].time.toString().toHHMMSS()}</div>
                 </div>
             </div>`
+        } else if (msgArray[i].type =='myMsg image') { /*TH7: Doan tin nhan la hinh anh do client gui di*/
+            data += `<div class="test w-100 d-flex justify-content-end my-2">
+                <div class="my message imageMsg" id="${msgArray[i].msg}">
+                    <div class="imageContainer">
+                        <img src="${msgArray[i].src}">
+                    </div>
+                </div>
+            </div>`;
+        } else if (msgArray[i].type =='yourMsg image') { /*TH8: Doan tin nhan la hinh anh do client nhan dc*/
+            data += `<div class="test w-100 d-flex my-2">
+                <div class="your message imageMsg" id="${msgArray[i].msg}">
+                    <div class="imageContainer">
+                        <img src="${msgArray[i].src}">
+                    </div>
+                </div>
+            </div>`;
         } else { /*TH con lai: Thong bao do server gui den*/ 
             data +=
                 '<div class="messageAlert test">\n'
@@ -250,7 +279,7 @@ function displayAttaMsg(filename, fileSize) {
     let msg = {
         type: 'yourMsg attachment',
         msg: filename,
-        size: updateSizeFile(fileSize),
+        size: getSizeFile(fileSize),
     }
     msgArray.push(msg);
     append();
@@ -269,6 +298,18 @@ function displayAudioMsg(filename, fileSize) {
     arrIntervalTmeline[filename] = 0;
     arrIntervals[filename] = 0;
 
+}
+
+function displayImageMsg(filename) {
+    let dataBytes = new Uint8Array(clientSocket.getCacheDataImg());
+    let src = URL.createObjectURL(new Blob([dataBytes], {type: "image/jpeg"}));
+    let msg = {
+        type: 'yourMsg image',
+        msg: filename,
+        src: src,
+    }
+    msgArray.push(msg);
+    append();
 }
 
 function connectSuccess() {
@@ -315,19 +356,22 @@ function addonToggle(){
     }
 }
 
-function updateSizeFile(fileSize) {
+function getSizeFile(fileSize) {
     let nBytes = fileSize;
-    let sOutput = nBytes + "bytes";
+    let sOutput = nBytes + "Bytes";
     // optional code for multiples approximation
     const aMultiples = ["Kb", "Mb", "Gb", "Tb"];
+    let nApprox, nMultiple;
     for (nMultiple = 0, nApprox = nBytes / 1024; nApprox >= 1; nApprox /= 1024, nMultiple++) {
-      sOutput = nApprox.toFixed(2) + "" + aMultiples[nMultiple];
+        sOutput = nApprox.toFixed(2) + "" + aMultiples[nMultiple];
     }
-    return sOutput;
+    if ((nApprox*1024).toFixed(2) > 25 && nMultiple == 2 || nMultiple > 2) return -1;
+    else return sOutput;
   }
   
 function sendDataFile(file) {
     fileData = new Blob([file]);
+    console.log(file);
     var promise = new Promise(function getBuffer(resolve) {
         var reader = new FileReader();
         reader.readAsArrayBuffer(fileData);
@@ -365,36 +409,113 @@ class FileOBject{
 }
 
 uploadInput.onchange = () => {
+    var files = uploadInput.files;
+    fileList = Array.from(files);
     removeAttchement();
     addonToggle();
-    var files = uploadInput.files;
+    uploadInput.removeAttribute("accept");
+    console.log(fileList);
+    for (let i = 0; i < fileList.length; i++){
+        if (getSizeFile(fileList[i].size) == -1) {
+            var options = {
+                keyboard: true,
+                focus: false,
+            }
+            var myModal = new bootstrap.Modal(document.getElementById('myModal'), options);
+            myModal.show();
+            document.getElementById("uploadInput").value = "";
+            fileList.splice(0, fileList.length);
+            return;
+        }
+    }
+    document.getElementById("uploadInput").value = "";
     var inputBar = document.getElementById("inputBar");
+    toggleDisplayNone(inputBar);
     var html = '';
-    for (let i = 0; i < files.length; i++){
-        html += '<div class="attachmnt">' +
-                    '<label for="" class="me-3">'+ files[i].name +'</label>' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" onclick="closeAttachment(this)"' +
-                        'viewBox="0 0 16 16">' +
-                        '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />' +
-                        '<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />' +
-                    '</svg>' +
-                '</div>'
+    for (let i = 0; i < fileList.length; i++){
+        let filetype = getFileType(fileList[i].name);
+        if (filetype == (".jpg" || ".png" || ".jpeg" || ".bmp")) {
+            let src = URL.createObjectURL(fileList[i]);
+            html += `<div class="previewContainer">
+                            <div class="removeAttIcon" onclick="closeAttachment(this, '${fileList[i].name}')">
+                                <div class="con">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x-circle"
+                                        viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                                        <path
+                                            d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <img src="${src}">
+                        </div>`
+        }
+        else {
+            html += `<div class="attachment">
+                            <div class="removeAttIcon" onclick="closeAttachment(this, '${fileList[i].name}')">
+                                <div class="con">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x-circle"
+                                        viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                                        <path
+                                            d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column justify-content-center align-items-center">
+                                <div class="attIcon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+                                        class="bi bi-file-earmark-text" viewBox="0 0 16 16">
+                                        <path
+                                            d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z" />
+                                        <path
+                                            d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="d-flex align-content-end w-100 ms-2 fw-bold">
+                                <span>${fileList[i].name}</span>
+                            </div>
+                        </div>`
+        }
     }
     inputBar.insertAdjacentHTML("afterbegin", html)
 }
-
-function closeAttachment(div) {
+function closeAttachment(div, filename) {
     var inputBar = document.getElementById("inputBar");
+    for (let i = 0; i < fileList.length; i++){
+        if (fileList[i].name == filename) fileList.splice(i, 1);
+    }
+    if (fileList.length == 0) {
+        toggleDisplayNone(inputBar);
+        toggleDisplayNone(document.getElementById("addonBtn"));
+    }
     inputBar.removeChild(div.parentNode);
 }
 
 function removeAttchement() {
     var inputBar = document.getElementById("inputBar");
-    var ele = document.getElementsByClassName("attachmnt");
+    var ele = document.getElementsByClassName("attachment");
+    var ele2 = document.getElementsByClassName("previewContainer");
     while (ele.length > 0) {
         inputBar.removeChild(ele[0]);
     }
-    
+    while (ele2.length > 0) {
+        inputBar.removeChild(ele2[0]);
+    }
+    if (fileList.length == 0) {
+        toggleDisplayNone(inputBar);
+        
+    }
+    toggleDisplayNone(document.getElementById("addonBtn"));
+}
+
+function getFileType(filename) {
+    let i;
+    for (i = filename.length - 1; i >= 0; i--){
+        if (filename[i] == '.') break;
+    }
+    return (filename.slice(i, filename.length)).toLowerCase();
 }
 // Code ben duoi la phan ghi am va code script cho cac chuc nang cua audio nhu la phat/tam ngung
 var audio = document.querySelector('audio'),
